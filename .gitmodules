@@ -1,0 +1,3 @@
+[submodule "Filters"]
+	path = Filters
+	url = https://github.com/Biont/Unity3D-Filters.git
