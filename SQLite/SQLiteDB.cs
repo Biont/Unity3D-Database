@@ -63,6 +63,24 @@ public class SQLiteDB
 
 		}
 
+		public object[][] ColumnInfo (string tableName)
+		{
+				IDataReader info = Fetch ("PRAGMA table_info(" + tableName + ");");
+				List<object[]> columns = new List<object[]> ();
+
+				while (info.Read ()) {
+						columns.Add (new object[]{
+				info.GetString (1), //Name
+				info.GetString (2), //Type
+				info.GetInt64 (3),//NOTNULL
+				info.GetValue (4),//Default
+				info.GetInt64 (5),//PrimaryKey
+			});
+				}
+		
+				return columns.ToArray ();
+		}
+
 
 
 }

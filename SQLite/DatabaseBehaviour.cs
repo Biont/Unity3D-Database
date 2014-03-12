@@ -10,7 +10,7 @@ public class DatabaseBehaviour : MonoBehaviour
 				Debug.Log (Application.persistentDataPath);
 				SQLiteDB db = new SQLiteDB (Application.dataPath + "/huhu");
 				db.Query ("CREATE TABLE test (name VARCHAR(20), score INT)");
-				db.Query ("CREATE TABLE test2 (name VARCHAR(20), score INT)");
+				db.Query ("CREATE TABLE test2 (label TEXT, position REAL)");
 		}
 	
 
