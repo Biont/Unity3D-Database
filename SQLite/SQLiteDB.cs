@@ -28,12 +28,14 @@ public class SQLiteDB
 
 		public void Query (string sql)
 		{
+				Debug.Log (sql);
 				command.CommandText = sql;
 				command.ExecuteNonQuery ();
 		}
 
 		public IDataReader Fetch (string sql)
 		{
+//				Debug.Log (sql);
 				command.CommandText = sql;
 				return command.ExecuteReader ();
 
@@ -68,10 +70,13 @@ public class SQLiteDB
 				IDataReader info = Fetch ("PRAGMA table_info(" + tableName + ");");
 				List<object[]> columns = new List<object[]> ();
 
+
+
+
 				while (info.Read ()) {
 						columns.Add (new object[]{
 				info.GetString (1), //Name
-				info.GetString (2), //Type
+				GetSQLType (info.GetString (2)), //Type
 				info.GetInt64 (3),//NOTNULL
 				info.GetValue (4),//Default
 				info.GetInt64 (5),//PrimaryKey
@@ -79,6 +84,33 @@ public class SQLiteDB
 				}
 		
 				return columns.ToArray ();
+		}
+		/// <summary>
+		/// Gets the type of a field type. It's a safety net against usage of mysql field types,
+		/// so we know we're only dealing with sqlite types
+		/// </summary>
+		/// <returns>The SQL type.</returns>
+		/// <param name="input">Input.</param>
+		private string GetSQLType (string input)
+		{
+				if (input.Contains ("CHAR")) {
+						return "TEXT";
+				}
+				if (input.Contains ("TEXT")) {
+						return "TEXT";
+				}
+
+
+
+				if (input.Contains ("INT")) {
+						return "INTEGER";
+				}
+
+				if (input.Contains ("BLOB")) {
+						return "BLOB";
+				}
+
+				return input;
 		}
 
 
