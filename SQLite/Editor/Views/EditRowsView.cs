@@ -52,6 +52,7 @@ public class EditRowsView : ISQLiteManagerView
 						if (currentRows > 0) {
 								DisplayCurrentRows ();
 						}
+						DisplayPagination ();
 			
 						DisplayInsertRow ();
 			
@@ -124,7 +125,6 @@ public class EditRowsView : ISQLiteManagerView
 						EditorGUILayout.EndHorizontal ();
 
 
-						DisplayPagination ();
 				}
 				
 		}

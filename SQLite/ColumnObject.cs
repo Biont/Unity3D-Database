@@ -9,6 +9,7 @@ public class ColumnObject:ICloneable
 		public string name = "nullColumn";
 		public string type = "null";
 
+		bool hasDefault;
 		SQLiteDataType content;
 		object _defaultContent;
 		SQLiteDataType defaultContent;
@@ -18,13 +19,19 @@ public class ColumnObject:ICloneable
 		bool autoIncrement = false;
 
 
+		private int typeIndex = 0;
+
 		public ColumnObject (string name, string type, bool notNull, object defaultContent, bool primaryKey)
 		{
 				this.name = name;
 				this.type = type;
 				this.notNull = notNull;
 				this.content = SQLiteDataTypeLoader.GetType (type, defaultContent);
-				this.defaultContent = SQLiteDataTypeLoader.GetType (type, defaultContent);
+				if (hasDefault = defaultContent != null) {
+						this.defaultContent = SQLiteDataTypeLoader.GetType (type, defaultContent);
+				} else {
+
+				}
 				this.primaryKey = primaryKey;
 
 
@@ -56,14 +63,21 @@ public class ColumnObject:ICloneable
 		/// This show the controls for adding or changing a column
 		/// </summary>
 		/// <param name="editable">If set to <c>true</c> editable.</param>
-		public void EditorFieldSetup (bool editable=true)
+		public void EditorFieldSetup (string[] types, bool editable=true)
 		{
+				string oldType = type;
 				GUI.enabled = editable;
-
+				name = EditorGUILayout.TextField (name);
+				type = types [typeIndex = EditorGUILayout.Popup (typeIndex, types)];
 				primaryKey = EditorGUILayout.Toggle ("Primary Key", primaryKey);
 				autoIncrement = EditorGUILayout.Toggle ("AutoIncrement", autoIncrement);
 				notNull = EditorGUILayout.Toggle ("Not null", notNull);
-
+				if (defaultContent == null || oldType != type) {
+						defaultContent = SQLiteDataTypeLoader.GetType (type, null);
+				}
+				if (hasDefault = EditorGUILayout.Toggle ("Default", hasDefault)) {
+						defaultContent.EditorField (false, "");
+				}
 
 				GUI.enabled = true;
 		}

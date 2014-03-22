@@ -78,6 +78,7 @@ public class SQLiteManager:EditorWindow
 				if (views.ContainsKey (viewType)) {
 						if (views [viewType].ContainsKey (viewName)) {
 								views [viewType] [viewName].Prepare (this);
+				
 						}
 				}
 		}
@@ -133,7 +134,7 @@ public class SQLiteManager:EditorWindow
 				model.SetRange (page, rowsPerPage); 
 
 
-				if (workingTable == null) {
+				if (workingTable == null && hasDB) {
 						workingTable = tableInfo [0];
 				}
 				model.SetCurrentTable (workingTable);
@@ -272,6 +273,7 @@ public class SQLiteManager:EditorWindow
 						if (GUILayout.Button (table)) {
 								workingTable = table;
 								screen = "CurrentTable";
+								GUI.FocusControl ("");
 								SQLiteManager.SetDirty ();
 				
 						}
@@ -284,6 +286,8 @@ public class SQLiteManager:EditorWindow
 				GUI.enabled = (screen != "CreateTable");
 				if (GUILayout.Button ("Create Table")) {
 						workingTable = null;
+						GUI.FocusControl ("");
+			
 						screen = "CreateTable";
 			
 			
@@ -293,6 +297,7 @@ public class SQLiteManager:EditorWindow
 				GUI.enabled = (screen != "Settings");
 				if (GUILayout.Button ("Settings")) {
 						workingTable = null;
+						GUI.FocusControl ("");
 			
 						screen = "Settings";
 			
@@ -302,6 +307,8 @@ public class SQLiteManager:EditorWindow
 				if (GUILayout.Button ("Change DB")) {
 						dbSlot = null;
 						model.ClearDB ();
+						GUI.FocusControl ("");
+			
 						SQLiteManager.SetDirty ();
 			
 				}

@@ -15,6 +15,9 @@ public class SQLiteTypeInteger : SQLiteDataType
 	
 		public override void EditorField (bool selected, string label)
 		{
+				if (value == null) {
+						value = 0;
+				}
 				value = EditorGUILayout.IntField (label, (int)value);
 		}
 

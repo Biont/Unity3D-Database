@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEditor;
 using System;
 using System.Reflection;
 using System.Collections;
@@ -40,6 +41,8 @@ public static class DBHelpers
 
 
 
+
+
 //#if UNITY_EDITOR
 //		public static string EditorField (this string input)
 //		{
@@ -54,7 +57,78 @@ public static class DBHelpers
 
 }
 
+namespace UnityEditor
+{
 
+		public static class BiontEditorExtensions
+		{
+
+
+
+
+				public static void ListTool<T> (this IList<T> list, System.Action<T> eachItemAction, System.Func<T> addAction=null)
+				{
+
+						int? remove = null;
+
+						int i = 0;
+						foreach (T item in list) {
+								EditorGUILayout.BeginHorizontal ();
+								if (GUILayout.Button ("+", GUILayout.Width (20))) {
+										list.MoveUp (i);
+								}
+								if (GUILayout.Button ("-", GUILayout.Width (20))) {
+										list.MoveDown (i);
+								}
+								if (GUILayout.Button ("x", GUILayout.Width (20))) {
+										remove = i;
+								}
+								eachItemAction (item);
+
+								EditorGUILayout.EndHorizontal ();
+								i++;
+						}
+						if (addAction != null) {
+								if (GUILayout.Button ("Add Item")) {
+										list.Add (addAction ());
+								}
+						}
+
+						if (remove != null) {
+								list.RemoveAt (remove.Value);
+				
+						}
+
+				}
+
+
+
+
+				public static void MoveUp<T> (this IList<T> list, int iIndexToMove)
+				{
+		
+						if (iIndexToMove > 0) {
+								var old = list [iIndexToMove - 1];
+								list [iIndexToMove - 1] = list [iIndexToMove];
+								list [iIndexToMove] = old;
+						}
+				}
+		
+				public static void MoveDown<T> (this IList<T> list, int iIndexToMove)
+				{
+			
+						if (iIndexToMove < list.Count - 1) {
+								
+								var old = list [iIndexToMove + 1];
+								list [iIndexToMove + 1] = list [iIndexToMove];
+								list [iIndexToMove] = old;
+						
+						}
+				}
+
+		}
+		
+}
 
 
 

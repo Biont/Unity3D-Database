@@ -15,7 +15,11 @@ public class SQLiteTypeReal : SQLiteDataType
 	
 		public override void EditorField (bool selected, string label)
 		{
+				if (value == null) {
+						value = 0.0f;
+				}
 				value = EditorGUILayout.FloatField (label, (float)value);
+
 		}
 	
 }

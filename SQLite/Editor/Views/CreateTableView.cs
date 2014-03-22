@@ -27,16 +27,18 @@ public class CreateTableView : ISQLiteManagerView
 		{
 				GUILayout.Label ("createtableview", EditorStyles.label);
 
-				GetTypeIndices ();
-
-				foreach (ColumnObject col in tempTable) {
-						col.EditorFieldSetup ();
-				}
 
 
-				if (GUILayout.Button ("Add Column")) {
-						AddColumn ();
-				}
+				tempTable.ListTool ((col) => {
+
+						col.EditorFieldSetup (data.availableTypes);
+
+				}, () => {
+
+						return new ColumnObject ("Column name", data.availableTypes [0], false, null, false);
+
+				});
+
 	
 		}
 
@@ -47,14 +49,5 @@ public class CreateTableView : ISQLiteManagerView
 
 		}
 	
-		private void GetTypeIndices ()
-		{
-//				int numCols = data.tableLayout.Length;
-//				if (typeIndices == null || typeIndices.Length != numCols) {
-//						typeIndices = new int[data.tableLayout.Length];
-//						for (int i=0; i<numCols; i++) {
-//								typeIndices [i] = Array.IndexOf (data.availableTypes, data.tableLayout [i].type);
-//						}
-//				}
-		}
+
 }
