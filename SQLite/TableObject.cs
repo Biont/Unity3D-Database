@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Data;
+using System.Linq;
 using System.Collections.Generic;
 using Mono.Data.SqliteClient;
 
@@ -9,12 +10,13 @@ public class TableObject
 {
 		SQLiteDB db; 
 		public string workingTable;
-		public int page = 0;
-		public int itemsPerPage = 10;
-
+		public int rowCount;
 		public List<string> names;
 		public List<string> types;
-		public List<List<object>> tempData = new List<List<object>> ();
+
+		List<ColumnObject> columns;
+
+		public List<List<ColumnObject>> tempData = new List<List<ColumnObject>> ();
 
 
 
@@ -25,16 +27,25 @@ public class TableObject
 
 				names = new List<string> ();
 				types = new List<string> ();
-		
+
+				columns = this.db.ColumnInfo (workingTable);
 			
-				object[][] colInfo = db.ColumnInfo (workingTable);
-			
-				foreach (object[] column in colInfo) {
-						names.Add ((string)column [0]);
-						types.Add ((string)column [1]);
+				GetRowCount ();
+				foreach (ColumnObject column in columns) {
+						names.Add (column.name);
+						types.Add (column.type);
 				
 				}
 		
+		}
+
+		private void GetRowCount ()
+		{
+				IDataReader r = this.db.Fetch ("SELECT COUNT(*) FROM " + workingTable);
+				while (r.Read ()) {
+						rowCount = r.GetInt32 (0);
+				}
+
 		}
 	
 		public void GetData (int page, int itemsPerPage)
@@ -48,8 +59,9 @@ public class TableObject
 				db.Query (sql);
 		}
 
-		public void GatherTempData ()
+		public void GatherTempData (int page, int itemsPerPage)
 		{
+				tempData.Clear ();
 				if (workingTable != null && workingTable != "") {
 			
 						int offset = page * itemsPerPage;
@@ -58,10 +70,11 @@ public class TableObject
 			
 						int index = 0;
 						while (r.Read()) {
-								List<object> newList = new List<object> ();
+								List<ColumnObject> newList = new List<ColumnObject> (columns.Select (x => x.Clone ()as ColumnObject));
 				
 								for (int i = 0; i < r.FieldCount; i ++) {
-										newList.Add (r.GetValue (i));
+										newList [i].SetValue (r.GetValue (i));
+//										Debug.Log (r.GetValue (i).ToString ());
 								}  
 								index++;
 								tempData.Add (newList);
@@ -69,5 +82,13 @@ public class TableObject
 						}
 				}
 		
+		}
+
+		public List<ColumnObject> GetTablelayout ()
+		{
+				if (columns == null) {
+						Debug.Log ("No columns :(");
+				}
+				return columns;
 		}
 }

@@ -1,8 +1,10 @@
 ﻿using UnityEngine;
+using UnityEditor;
 using System.Collections;
 using System.Data;
 using System.Collections.Generic;
 using Mono.Data.SqliteClient;
+
 
 public class SQLiteManagerModel
 {
@@ -10,12 +12,29 @@ public class SQLiteManagerModel
 		public string workingTable;
 		public int page = 0;
 		public int itemsPerPage = 10;
+
+		public bool _hasChanged = false;
+		public bool hasChanged {
+				get {
+						if (_hasChanged) {
+								Debug.Log ("hasChanged");
+				
+								_hasChanged = false;
+								return true;
+						}
+						return false;
+				}
+		}
+
 		Dictionary<string,TableObject>
 				tables = new Dictionary<string, TableObject> ();
 
 		object[] tempRow;
 		string[] tableInfo;
 
+		public int rowCount{ get { return tables [workingTable].rowCount; } }
+
+		public bool isReady{ get { return (workingTable != null && workingTable != ""); } }
 		public bool isDirty = false;
 	
 		public void ClearDB ()
@@ -42,12 +61,29 @@ public class SQLiteManagerModel
 
 		public void SetCurrentTable (string table)
 		{
-				workingTable = table;
-				page = 0;
-				SetDirty ();
+				if (workingTable != table) {
+						workingTable = table;
+						page = 0;
+						SetDirty ();
+				}
 		}
 
-		public void SetDirty ()
+		public void SetRange (int page, int itemsPerPage)
+		{
+				bool reload = false;
+				if (this.page != page || this.itemsPerPage != itemsPerPage) {
+						Debug.Log ("Range hat sich geändert");
+						reload = true;
+				}
+				this.page = page;
+				this.itemsPerPage = itemsPerPage;
+				if (reload) {
+						GatherTempData ();
+						_hasChanged = true;
+				}
+			
+		}
+		void SetDirty ()
 		{
 				tableInfo = null;
 				tables.Clear ();
@@ -69,14 +105,7 @@ public class SQLiteManagerModel
 
 				isDirty = false;
 		}
-
-		public bool IsReady ()
-		{ 
-//				if (isDirty) {
-//						ReloadFromDB ();
-//				}
-				return (workingTable != null && workingTable != "");
-		}
+	
 
 		public string[] GetTypes ()
 		{
@@ -119,7 +148,8 @@ public class SQLiteManagerModel
 		public object[][] GetCurrentRows ()
 		{
 				List<object[]> data = new List<object[]> ();
-				foreach (List<object> objects in tables [workingTable].tempData) {
+				Debug.Log ("rows in tempdata of current table: " + tables [workingTable].tempData.Count);
+				foreach (List<ColumnObject> objects in tables [workingTable].tempData) {
 						data.Add (objects.ToArray ());
 				}
 				return data.ToArray ();
@@ -131,9 +161,15 @@ public class SQLiteManagerModel
 
 		void GatherTempData ()
 		{
-				if (IsReady ())
-						tables [workingTable].GatherTempData ();
+				if (isReady) {
+						tables [workingTable].GatherTempData (page, itemsPerPage);
+				}
 
+		}
+
+		public List<ColumnObject> GetTableLayout ()
+		{
+				return tables [workingTable].GetTablelayout ();
 		}
 
 }

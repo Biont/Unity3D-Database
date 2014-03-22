@@ -6,34 +6,63 @@ using System.Linq;
 using System.Collections.Generic;
 using Mono.Data.SqliteClient;
 
-public class SQLiteManager : EditorWindow
+
+public class SQLiteManager:EditorWindow
 {
+
+
+		static SQLiteManager
+				_instance;
+		static SQLiteManager
+				Instance {
+				get {
+						if (_instance == null)
+								Init ();
+						return _instance;
+				}
+		}
 		[MenuItem ("Window/SQLiteManager")]
 		static void Init ()
 		{
-				SQLiteManager window = (SQLiteManager)EditorWindow.GetWindow (typeof(SQLiteManager));
+				_instance = (SQLiteManager)EditorWindow.GetWindow (typeof(SQLiteManager));
 		}
-		[System.NonSerialized]
-		List<System.Action>
-				repaintActions = new List<System.Action> ();
+
+
+
+		List<System.Action>	repaintActions = new List<System.Action> ();
+
 		[System.NonSerialized]
 		SQLiteManagerModel
 				model = new SQLiteManagerModel ();
 
 		UnityEngine.Object dbSlot;
 		bool hasDB = false; 
-
+		[System.NonSerialized]
+		public int
+				page = 0;
 		public int rowsPerPage = 15;
 
-		public bool isReady;
+
+
+		[System.NonSerialized]
+		public bool
+				dirty = true; //Should we reload all database info?
+		[System.NonSerialized]
+		public bool
+				isReady = false;
+		public int rowCount;
 		public string[] columnNames;
 		public string[] types;
-		string[] tableInfo;
+		public string[] tableInfo;
 		public object[] insertRow;
 		public object[] currentRows;
-
+		public ColumnObject[] tableLayout;
+		public Dictionary<string,System.Type> dataTypes;
+		public string[] availableTypes;
+	
 
 		Vector2 sideBarScrollPosition = Vector2.zero;
+		Vector2 mainScreenScrollPosition = Vector2.zero;
 		string screen = "CurrentTable";
 	
 		string tableViewTab = "Content";
@@ -41,10 +70,6 @@ public class SQLiteManager : EditorWindow
 
 
 		Dictionary<string,Dictionary<string,ISQLiteManagerView>> views;
-
-	
-
-		private int tableIndex;
 
 
 
@@ -81,47 +106,69 @@ public class SQLiteManager : EditorWindow
 				model.SetInsertRow (insertRow);
 		}
 
+		void OnEnable ()
+		{
+				Debug.Log ("enable");
+		}
+
+		void OnDisable ()
+		{
+				Debug.Log ("disable");
+		}
+
 		void Update ()
 		{
+				if (dataTypes == null) {
+						dataTypes = SQLiteDataTypeLoader.GetDataTypes ();
+						availableTypes = new string[dataTypes.Keys.Count];
+						dataTypes.Keys.CopyTo (availableTypes, 0);
+				}
+
 				if (views == null) {
-						views = new Dictionary<string, Dictionary<string, ISQLiteManagerView>> ();
-
-						var baseType = typeof(ISQLiteManagerView);
-						var assembly = baseType.Assembly;
-						IEnumerable<System.Type> types = assembly.GetTypes ().Where (t => t.IsSubclassOf (baseType));
 		
-						foreach (System.Type t in types) {
-								ISQLiteManagerView instance = (ISQLiteManagerView)Activator.CreateInstance (t);
-								if (views.ContainsKey (instance.type)) {
-										views [instance.type].Add (instance.name, instance);
-								} else {
-										views.Add (instance.type, new Dictionary<string, ISQLiteManagerView> (){{instance.name,instance}});
-					
-								}
-						
-		
-						}
+						CollectViews ();
 				}
-		
-				if (hasDB = model.HasDB ()) {
-						DoRepaint (); //Carry out any action that might have been added from OnGUI()
 
-						tableInfo = model.GetTableInfo ();
+
+				model.SetRange (page, rowsPerPage); 
+
+
+				if (workingTable == null) {
+						workingTable = tableInfo [0];
+				}
+				model.SetCurrentTable (workingTable);
+
+		
+
+				if (dirty || model.hasChanged) {
+						if (hasDB = model.HasDB ()) {
+								DoRepaint (); //Carry out any action that might have been added from OnGUI()
+								tableInfo = model.GetTableInfo ();
+				
+
+				
 			
-						if (isReady = model.IsReady ()) {
-								columnNames = model.GetColumnNames ();
-								types = model.GetTypes ();
-								insertRow = model.GetInsertRow ();
-								currentRows = model.GetCurrentRows ();
+								if (isReady = model.isReady) {
+										rowCount = model.rowCount;
+										columnNames = model.GetColumnNames ();
+										types = model.GetTypes ();
+										insertRow = model.GetInsertRow ();
+										currentRows = model.GetCurrentRows ();
+										tableLayout = model.GetTableLayout ().ToArray ();
+
+								}
 
 
+						} else {
 						}
-
-
-				} else {
+						dirty = false;
 				}
 
+		}
 
+		public static void SetDirty ()
+		{
+				SQLiteManager.Instance.dirty = true;
 		}
 
 		void OnRepaint (System.Action action)
@@ -138,6 +185,37 @@ public class SQLiteManager : EditorWindow
 		}
 
 
+		void CollectViews ()
+		{
+				views = new Dictionary<string, Dictionary<string, ISQLiteManagerView>> ();
+		
+
+				IEnumerable<System.Type> types = GetSubTypes (typeof(ISQLiteManagerView));
+		
+				foreach (System.Type t in types) {
+						ISQLiteManagerView instance = (ISQLiteManagerView)Activator.CreateInstance (t);
+						if (views.ContainsKey (instance.type)) {
+								views [instance.type].Add (instance.name, instance);
+						} else {
+								views.Add (instance.type, new Dictionary<string, ISQLiteManagerView> (){{instance.name,instance}});
+				
+						}
+			
+			
+				}
+		}
+
+		void CollectTypes ()
+		{
+
+		}
+
+		IEnumerable<System.Type> GetSubTypes (System.Type type)
+		{
+				var assembly = type.Assembly;
+				return assembly.GetTypes ().Where (t => t.IsSubclassOf (type));
+		}
+
 	
 		void OnGUI ()
 		{
@@ -147,16 +225,22 @@ public class SQLiteManager : EditorWindow
 						DBSelector ();
 
 				} else {
-						Rect sideBarRect = new Rect (0, 0, 110, 200);
+						float width = position.width;
+						float height = position.height;
+
+						float sideBarWidth = width / 100 * 20;
+						Rect sideBarRect = new Rect (0, 0, sideBarWidth, height);
 						GUILayout.BeginArea (sideBarRect);
 						sideBarScrollPosition = GUILayout.BeginScrollView (sideBarScrollPosition);
 						Sidebar ();
 						GUILayout.EndScrollView ();
 						GUILayout.EndArea ();
 
-						GUILayout.BeginArea (new Rect (120, 0, 500, 500));
+						GUILayout.BeginArea (new Rect (sideBarWidth + 15, 0, width / 100 * 80 - 15, height));
+						mainScreenScrollPosition = GUILayout.BeginScrollView (mainScreenScrollPosition);
 
 						ShowView ("screen", screen);
+						GUILayout.EndScrollView ();
 
 						GUILayout.EndArea ();
 
@@ -170,6 +254,7 @@ public class SQLiteManager : EditorWindow
 				if (dbSlot != null) {
 						string workingDB = Application.dataPath + "/../" + AssetDatabase.GetAssetPath (dbSlot);
 						model.SetDB (workingDB);
+						SQLiteManager.SetDirty ();
 				}
 
 				//TODO "Or create a new Database"
@@ -179,21 +264,16 @@ public class SQLiteManager : EditorWindow
 
 		void Sidebar ()
 		{
-				int tableLen = tableInfo.Length;
-		
 
-				GUILayout.Label (tableLen + " Tables", EditorStyles.boldLabel);
-				for (int i=0; i<tableLen; i++) {
+				foreach (string table in tableInfo) {
 
-						GUI.enabled = (tableInfo [i] != workingTable);
+						GUI.enabled = (table != workingTable);
 			
-						if (GUILayout.Button (tableInfo [i])) {
-								workingTable = tableInfo [i];
+						if (GUILayout.Button (table)) {
+								workingTable = table;
 								screen = "CurrentTable";
-								tableIndex = i;
-								OnRepaint (() => {
-										model.SetCurrentTable (tableInfo [tableIndex]);
-								});
+								SQLiteManager.SetDirty ();
+				
 						}
 						GUI.enabled = true;
 			
@@ -205,6 +285,7 @@ public class SQLiteManager : EditorWindow
 				if (GUILayout.Button ("Create Table")) {
 						workingTable = null;
 						screen = "CreateTable";
+			
 			
 				}
 				GUI.enabled = true;
@@ -221,6 +302,8 @@ public class SQLiteManager : EditorWindow
 				if (GUILayout.Button ("Change DB")) {
 						dbSlot = null;
 						model.ClearDB ();
+						SQLiteManager.SetDirty ();
+			
 				}
 		}
 	

@@ -32,10 +32,11 @@ public class EditRowsView : ISQLiteManagerView
 		
 				if (data.isReady) {
 
-
+						GUILayout.Label ("Displaying " + data.currentRows.Length + " of " + data.rowCount + " rows", EditorStyles.label);
 			
-						if (selectedRows == null || selectedRows.Length != data.rowsPerPage) {
-								selectedRows = new bool[data.rowsPerPage];
+						int currentRows = data.currentRows.Length;
+						if (selectedRows == null || selectedRows.Length != currentRows) {
+								selectedRows = new bool[currentRows];
 						}
 
 
@@ -47,8 +48,10 @@ public class EditRowsView : ISQLiteManagerView
 								GUILayout.Label (name, EditorStyles.label);
 						}
 						EditorGUILayout.EndHorizontal ();
-						// Fetched rows
-						DisplayCurrentRows ();
+						
+						if (currentRows > 0) {
+								DisplayCurrentRows ();
+						}
 			
 						DisplayInsertRow ();
 			
@@ -63,63 +66,97 @@ public class EditRowsView : ISQLiteManagerView
 
 		void DisplayCurrentRows ()
 		{ 
+
+//				Debug.Log ("currows selrows " + data.currentRows.Length + " - " + selectedRows.Length);
+		
+
 				int rowIndex = 0;
 				string[] types = data.types;
-				foreach (object[] row in data.currentRows) {
-						EditorGUILayout.BeginHorizontal ();
-						selectedRows [rowIndex] = EditorGUILayout.Toggle (selectedRows [rowIndex], GUILayout.MaxWidth (20));
+				if (data.isReady) {
+
+						foreach (ColumnObject[] row in data.currentRows) {
+								EditorGUILayout.BeginHorizontal ();
+								selectedRows [rowIndex] = EditorGUILayout.Toggle (selectedRows [rowIndex], GUILayout.MaxWidth (20));
 			
 			
-						int colIndex = 0;
-						foreach (var column in row) {
-				
-								switch (types [colIndex]) {
-								case "TEXT":
-										row [colIndex] = EditorGUILayout.TextField ((string)row [colIndex]);
-										break;
-								case "INTEGER":
-										row [colIndex] = EditorGUILayout.IntField ((int)row [colIndex]);
-										break;
-								case "REAL":
-										row [colIndex] = EditorGUILayout.FloatField ((float)row [colIndex]);
-										break;
-								default:
-										GUILayout.Label ("unknown type", EditorStyles.label);
-										break;
+								int colIndex = 0;
+								foreach (var column in row) {
+										column.EditorField (selectedRows [rowIndex]);
 								}
-				
-								colIndex++;
-				
-				
-				
-						}
 			
-						if (GUILayout.Button ("Save")) {
-								//UpdateRow(rowIndex);
-						}
+								if (GUILayout.Button ("Save")) {
+										//UpdateRow(rowIndex);
+								}
 			
-						rowIndex++;
+								rowIndex++;
+								EditorGUILayout.EndHorizontal ();
+			
+						}
+						EditorGUILayout.BeginHorizontal ();
+
+
+						if (GUILayout.Button ("Select all")) {
+								int rowLen = selectedRows.Length;
+								for (int i=0; i<rowLen; i++) {
+										selectedRows [i] = true;
+								}
+						}
+						if (GUILayout.Button ("Select none")) {
+								int rowLen = selectedRows.Length;
+								for (int i=0; i<rowLen; i++) {
+										selectedRows [i] = false;
+								}
+						}
+
+						GUILayout.Label ("Selected rows:", EditorStyles.label);
+		
+						if (GUILayout.Button ("Delete", GUILayout.Width (80))) {
+								if (EditorUtility.DisplayDialog ("Confirm deletion?", "Really delete this row?", "yep", "nope")) {
+										//TODO
+								}
+						}
+						if (GUILayout.Button ("Export", GUILayout.Width (80))) {
+								if (EditorUtility.DisplayDialog ("Confirm deletion?", "Really delete this row?", "yep", "nope")) {
+										//TODO
+								}
+						}
+		
 						EditorGUILayout.EndHorizontal ();
-			
+
+
+						DisplayPagination ();
 				}
+				
+		}
+
+		void DisplayPagination ()
+		{
+				int maxPages = Mathf.RoundToInt (data.rowCount / data.rowsPerPage);
+
 				EditorGUILayout.BeginHorizontal ();
-		
-				GUILayout.Label ("Selected rows:", EditorStyles.label);
-		
-				if (GUILayout.Button ("Delete")) {
-						if (EditorUtility.DisplayDialog ("Confirm deletion?", "Really delete this row?", "yep", "nope")) {
-								//TODO
-						}
+				GUI.enabled = (data.page > 0);
+			
+				if (GUILayout.Button ("<<", GUILayout.Width (50))) {
+						data.page--;
 				}
-				if (GUILayout.Button ("Export")) {
-						if (EditorUtility.DisplayDialog ("Confirm deletion?", "Really delete this row?", "yep", "nope")) {
-								//TODO
-						}
+				GUI.enabled = true;
+
+				GUILayout.Label ("Page: " + data.page, EditorStyles.label);
+		
+
+				GUI.enabled = (data.page < maxPages);
+		
+				if (GUILayout.Button (">>", GUILayout.Width (50))) {
+						data.page++;
 				}
+				GUI.enabled = true;
 		
 				EditorGUILayout.EndHorizontal ();
-
 		}
+
+
+
+
 
 		void DisplayInsertRow ()
 		{

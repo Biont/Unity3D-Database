@@ -24,9 +24,13 @@ public class CurrentTableView : ISQLiteManagerView
 
 		public override void Display ()
 		{
-				GUILayout.Label ("Current Table", EditorStyles.label);
-				TableView ();
-	
+				if (data.isReady) {
+						GUILayout.Label ("Current Table", EditorStyles.label);
+						TableView ();
+				} else {
+						GUILayout.Label ("No Table selected", EditorStyles.label);
+			
+				}
 		}
 
 

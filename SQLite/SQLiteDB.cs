@@ -65,26 +65,31 @@ public class SQLiteDB
 
 		}
 
-		public object[][] ColumnInfo (string tableName)
+		public List<ColumnObject> ColumnInfo (string tableName)
 		{
 				IDataReader info = Fetch ("PRAGMA table_info(" + tableName + ");");
-				List<object[]> columns = new List<object[]> ();
+				List<ColumnObject> columns = new List<ColumnObject> ();
 
 
 
 
 				while (info.Read ()) {
-						columns.Add (new object[]{
+						columns.Add (new ColumnObject (
 				info.GetString (1), //Name
 				GetSQLType (info.GetString (2)), //Type
-				info.GetInt64 (3),//NOTNULL
+				(info.GetInt64 (3) > 0),//NOTNULL
 				info.GetValue (4),//Default
-				info.GetInt64 (5),//PrimaryKey
-			});
+			(info.GetInt64 (5) > 0)//PrimaryKey
+						));
 				}
+				
 		
-				return columns.ToArray ();
+				return columns;
 		}
+
+
+	
+
 		/// <summary>
 		/// Gets the type of a field type. It's a safety net against usage of mysql field types,
 		/// so we know we're only dealing with sqlite types
