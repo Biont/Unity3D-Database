@@ -125,13 +125,13 @@ public class SQLiteManagerModel
 				return tables [workingTable].names.ToArray ();
 		}
 
-		public object[] GetInsertRow ()
-		{
-				if (tempRow == null || tempRow.Length != GetTypes ().Length) {
-						tempRow = new object[GetTypes ().Length];
-				}
-				return tempRow;
-		}
+//		public object[] GetInsertRow ()
+//		{
+//				if (tempRow == null || tempRow.Length != GetTypes ().Length) {
+//						tempRow = new object[GetTypes ().Length];
+//				}
+//				return tempRow;
+//		}
 		public void SetInsertRow (object[] row)
 		{
 				if (tempRow != null) {  //This check is important because otherwise it is possible to insert an old list even after a table change
@@ -143,6 +143,11 @@ public class SQLiteManagerModel
 		{
 				tables [workingTable].Insert (row);
 				SetDirty ();
+		}
+
+		public void SQL (string sql)
+		{
+				db.Query (sql);
 		}
 
 		public object[][] GetCurrentRows ()

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.Collections;
+using System.Text;
 using System.Collections.Generic;
 
 public class CreateTableView : ISQLiteManagerView
@@ -18,6 +19,7 @@ public class CreateTableView : ISQLiteManagerView
 				}
 		}
 
+		private string tableName = "Table";
 		private int[] typeIndices;
 		private List<ColumnObject> tempTable = new List<ColumnObject> ();
 	
@@ -27,8 +29,13 @@ public class CreateTableView : ISQLiteManagerView
 		{
 				GUILayout.Label ("createtableview", EditorStyles.label);
 
-
-
+				if (GUILayout.Button ("?")) {
+						EditorUtility.DisplayDialog (
+				"Create Table",
+				"This is the help dialog for table creation",
+				"Ok");
+				}
+				tableName = EditorGUILayout.TextField ("Table Name", tableName);
 				tempTable.ListTool ((col) => {
 
 						col.EditorFieldSetup (data.availableTypes);
@@ -39,7 +46,12 @@ public class CreateTableView : ISQLiteManagerView
 
 				});
 
-	
+				if (GUILayout.Button ("Write")) {
+						string sql = string.Format ("CREATE TABLE {0}({1})", tableName, tempTable.Implode (","));
+						tempTable.Clear ();
+						data.SQL (sql);
+
+				}
 		}
 
 		void AddColumn ()

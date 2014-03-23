@@ -65,21 +65,35 @@ namespace UnityEditor
 
 
 
-
+				/// <summary>
+				/// Lists the tool.
+				/// </summary>
+				/// <param name="list">List.</param>
+				/// <param name="eachItemAction">Each item action.</param>
+				/// <param name="addAction">Add action.</param>
+				/// <typeparam name="T">The 1st type parameter.</typeparam>
 				public static void ListTool<T> (this IList<T> list, System.Action<T> eachItemAction, System.Func<T> addAction=null)
 				{
 
 						int? remove = null;
-
+						int count = list.Count;
 						int i = 0;
 						foreach (T item in list) {
 								EditorGUILayout.BeginHorizontal ();
+								GUI.enabled = (i > 0);
 								if (GUILayout.Button ("+", GUILayout.Width (20))) {
+										GUI.FocusControl ("");
 										list.MoveUp (i);
 								}
+								GUI.enabled = true;
+								GUI.enabled = (i < count - 1);
+				
 								if (GUILayout.Button ("-", GUILayout.Width (20))) {
+										GUI.FocusControl ("");
 										list.MoveDown (i);
 								}
+								GUI.enabled = true;
+				
 								if (GUILayout.Button ("x", GUILayout.Width (20))) {
 										remove = i;
 								}

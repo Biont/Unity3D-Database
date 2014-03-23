@@ -38,7 +38,10 @@ public  class SQLiteDataType
 				return value;
 		}
 
-
+		public override string ToString ()
+		{
+				return sqlText;
+		}
 
 }
 

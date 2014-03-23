@@ -162,31 +162,8 @@ public class EditRowsView : ISQLiteManagerView
 		{
 				EditorGUILayout.BeginHorizontal ();
 				int index = 0;
-				foreach (string type in data.types) {
-						switch (type) {
-						case "TEXT":
-								if (data.insertRow [index] == null) {
-										data.insertRow [index] = "";
-								}
-								data.insertRow [index] = EditorGUILayout.TextField ((string)data.insertRow [index]);
-								break;
-						case "INTEGER":
-								if (data.insertRow [index] == null) {
-										data.insertRow [index] = 0;
-								}
-								data.insertRow [index] = EditorGUILayout.IntField ((int)data.insertRow [index]);
-								break;
-						case "REAL":
-								if (data.insertRow [index] == null) {
-										data.insertRow [index] = 0.0f;
-								}
-								data.insertRow [index] = EditorGUILayout.FloatField ((float)data.insertRow [index]);
-								break;
-						default:
-								GUILayout.Label ("unknown type", EditorStyles.label);
-								break;
-						}
-						index++;
+				foreach (ColumnObject col in data.insertRow) {
+						col.EditorField (false);
 				}
 		
 				if (GUILayout.Button ("Insert")) {

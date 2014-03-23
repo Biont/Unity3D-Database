@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEditor;
 using System;
-using System.Data;
+//using System.Data;
 using System.Linq;
 using System.Collections.Generic;
-using Mono.Data.SqliteClient;
+//using Mono.Data.SqliteClient;
 
 
 public class SQLiteManager:EditorWindow
@@ -54,7 +54,7 @@ public class SQLiteManager:EditorWindow
 		public string[] columnNames;
 		public string[] types;
 		public string[] tableInfo;
-		public object[] insertRow;
+		public ColumnObject[] insertRow;
 		public object[] currentRows;
 		public ColumnObject[] tableLayout;
 		public Dictionary<string,System.Type> dataTypes;
@@ -66,7 +66,7 @@ public class SQLiteManager:EditorWindow
 		string screen = "CurrentTable";
 	
 		string tableViewTab = "Content";
-		string workingTable;
+		public string workingTable;
 
 
 		Dictionary<string,Dictionary<string,ISQLiteManagerView>> views;
@@ -153,10 +153,10 @@ public class SQLiteManager:EditorWindow
 										rowCount = model.rowCount;
 										columnNames = model.GetColumnNames ();
 										types = model.GetTypes ();
-										insertRow = model.GetInsertRow ();
 										currentRows = model.GetCurrentRows ();
 										tableLayout = model.GetTableLayout ().ToArray ();
-
+										insertRow = (ColumnObject[])tableLayout.Clone ();
+										
 								}
 
 
@@ -164,6 +164,13 @@ public class SQLiteManager:EditorWindow
 						}
 						dirty = false;
 				}
+
+		}
+
+		public void SQL (string sql)
+		{
+				model.SQL (sql);
+				SetDirty ();
 
 		}
 
@@ -258,6 +265,13 @@ public class SQLiteManager:EditorWindow
 						SQLiteManager.SetDirty ();
 				}
 
+				if (GUILayout.Button ("Create new Database")) {
+						string path = EditorUtility.SaveFilePanel (
+			"Save texture as PNG",
+			"",
+			"database" + ".png",
+			"png");
+				}
 				//TODO "Or create a new Database"
 		}
 

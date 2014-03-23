@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System;
+using System.Text;
 using System.Collections;
 
 public class ColumnObject:ICloneable
@@ -66,15 +67,19 @@ public class ColumnObject:ICloneable
 		public void EditorFieldSetup (string[] types, bool editable=true)
 		{
 				string oldType = type;
+
 				GUI.enabled = editable;
+
 				name = EditorGUILayout.TextField (name);
 				type = types [typeIndex = EditorGUILayout.Popup (typeIndex, types)];
 				primaryKey = EditorGUILayout.Toggle ("Primary Key", primaryKey);
 				autoIncrement = EditorGUILayout.Toggle ("AutoIncrement", autoIncrement);
 				notNull = EditorGUILayout.Toggle ("Not null", notNull);
+
 				if (defaultContent == null || oldType != type) {
 						defaultContent = SQLiteDataTypeLoader.GetType (type, null);
 				}
+
 				if (hasDefault = EditorGUILayout.Toggle ("Default", hasDefault)) {
 						defaultContent.EditorField (false, "");
 				}
@@ -85,6 +90,22 @@ public class ColumnObject:ICloneable
 		public void SetValue (object value)
 		{
 				content.SetValue (value);
+		}
+
+		public override string ToString ()
+		{
+		
+				StringBuilder sb = new StringBuilder (string.Format ("'{0}' {1}", name, type));
+
+				if (primaryKey)
+						sb.Append (" PRIMARY KEY");
+				if (notNull)
+						sb.Append (" NOT NULL");
+				if (hasDefault)
+						sb.AppendFormat (" DEFAULT('{0}')", defaultContent.ToString ());
+
+
+				return sb.ToString ();
 		}
 
 		public object Clone ()
